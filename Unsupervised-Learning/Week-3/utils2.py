@@ -10,6 +10,7 @@ from itertools import zip_longest
 
 import imageio
 import IPython
+import gymnasium as gym
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import numpy as np
@@ -420,14 +421,12 @@ def create_video(filename, env, q_network, fps=30):
 
     with imageio.get_writer(filename, fps=fps) as video:
         done = False
-        state, _ = env.reset()
+        state, _ = env.reset(seed=69)
         frame = env.render()
         video.append_data(frame)
         while not done:
-            state = tf.reshape(state, [1,8])
-            q_values = q_network(state)
+            q_values = q_network(tf.reshape(state, [1,8]))
             action = np.argmax(q_values.numpy()[0])
-            next_state, reward, terminated, truncated, info = env.step(action)
-            done = terminated or truncated
+            state, _, done, _ = gym.utils.step_api_compatibility.step_api_compatibility(env.step(action), output_truncation_bool=False)
             frame = env.render()
             video.append_data(frame)
